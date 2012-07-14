@@ -1,11 +1,13 @@
 ###########
-#....R....#
+#....R..3.#
 #.*******.#
 #.\\\\\\\.#
-#.       .#
-#..*\\\*..#
+#. C  5  .#
+#..*\\\*.I#
 #.#*\\\*#.#
 #########L#
 
-Water 3
-Flooding 2
+Water 4
+Trampoline C targets 3
+Flooding 3
+Trampoline I targets 5

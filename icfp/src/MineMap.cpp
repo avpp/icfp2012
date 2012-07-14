@@ -23,6 +23,13 @@ m_Water(m_metadata[0]), m_Flooding(m_metadata[1]), m_Waterproof(m_metadata[2])
     m_Size.y = 0;
     m_Lift = m_Size;
     m_Robot = m_Size;
+    for (int i = 0; i < TRAMPOLAINES_AMOUNT; i++)
+    {
+        m_startTrampolines[i] = m_endTrampolines[i] = NULL;
+        m_tramplinesAcces[i] = -1;
+    }
+    m_tramplanes = NULL;
+    m_tramplanesCount = 0;
     for (int i = 0; i < META_SIZE; i++)
         m_metadata[i] = META_DEFAULT[i];
 }
@@ -37,21 +44,63 @@ MineMap::~MineMap()
         delete m_Map;
     }
 
+    for (int i = 0; i < TRAMPOLAINES_AMOUNT; i++)
+    {
+        if (m_startTrampolines[i])
+            delete m_startTrampolines[i];
+        if (m_endTrampolines[i])
+            delete m_endTrampolines[i];
+    }
+    if (m_tramplanes)
+        delete [] m_tramplanes;
     //dtor
 }
 
+/*
+Заполняет информацию о трамплинах, лямбдах, лифте и роботе.
+*/
+void MineMap::fillMapCache(char ch, int x, int y)
+{
+    if (ch >= START_TRAMPLAINE_CHAR && ch < START_TRAMPLAINE_CHAR + TRAMPOLAINES_AMOUNT)
+    {
+        m_startTrampolines[ch - START_TRAMPLAINE_CHAR] = new Point(x, y);
+    }
+    else if (ch >= START_TRAGET_CHAR && ch < START_TRAGET_CHAR + TRAMPOLAINES_AMOUNT)
+    {
+        m_endTrampolines[ch - START_TRAGET_CHAR] = new Point(x, y);
+    }
+    else switch (ch)
+    {
+        case 'R' : m_Robot = Point(x, y); break;
+        case 'L' : m_Lift = Point(x, y); break;
+        case '\\' : m_Lambdas.push_back(Point(x, y)); break;
+    }
+}
+
+/*
+Чтение карты
+*/
 void MineMap::ReadMap()
 {
     using namespace std;
+
+    /* Читаем первую строчку в буфер-очередь. Собственно для того, что бы узнать размер строки*/
     queue<char> firstLine;
     char ch;
+    int cnt = 0;
     while (((ch = getOneChar()) != EOF) && (ch != '\n'))
+    {
         firstLine.push(ch);
+        fillMapCache(ch, cnt, 0);
+        cnt++;
+    }
+    /* Создаём буфер-очередь карты, состоящей из строчек*/
     int &width = m_width;
     int &height = m_height;
     width = firstLine.size();
     height = 1;
     queue<char*> map;
+    /* Загоняем туда первую строчку*/
     char *tmp = new char[width];
     for (int i = 0; i < width; i++)
     {
@@ -59,85 +108,152 @@ void MineMap::ReadMap()
         firstLine.pop();
     }
     map.push(tmp);
+    /* Читаем до конца файла или пока не встретится строчка, начинающаяся с '\n' */
     ch = getOneChar();
     while ((ch != EOF) && (ch != '\n'))
     {
+        /* Собираем всю строчку и записываем её в конечный буфер (для каждой строки свой массив)*/
         tmp = new char [width];
         for (int i = 0; i < width; i++, ch = getOneChar())
         {
             tmp[i] = ch;
-            switch (ch)
-            {
-                case 'R' : m_Robot = Point(i, height); break;
-                case 'L' : m_Lift = Point(i, height); break;
-                case '\\' : m_Lambdas.push_back(Point(i, height)); break;
-            }
+            fillMapCache(ch, i, height);
         }
+        /* читаем следующий символ */
         ch = getOneChar();
+        /* загоняем адрес созданной строки в буфер-карту */
         map.push(tmp);
         height++;
     }
 
+    /* Переписываем из буфер-карты(очереди) в нормальный массив (создаём матрицу)*/
     m_Map = new char* [height];
     for (int i = 0; i < height; i++)
     {
         m_Map[i] = map.front();
         map.pop();
     }
+    /* Подсчитываем, сколько было найдено трамплинов и создаём массив с найденными*/
+    for (int i = 0; i < TRAMPOLAINES_AMOUNT; i++)
+        if (m_startTrampolines[i])
+            m_tramplanesCount++;
+    if (m_tramplanesCount)
+        m_tramplanes = new unsigned int [m_tramplanesCount];
+    int trampolaineNum = 0;
 
+    /* Далее будем читать дополнительную информацию о карте*/
     int result;
     char* buffer = new char[100];
     buffer[99] = 0;
     int value = 0;
     do
     {
-        result = scanf("%99s %d", buffer, &value);
+        /* Читаем строчку до пробела для последующей расшифровки типа информации*/
+        result = scanf("%99s", buffer);
         if (result > 0)
         {
-            for (int i = 0; i < META_SIZE; i++)
+            /* Если начинается с "Trampoline", значит это трамплин и заносим информацию для него*/
+            if (!strcmp("Trampoline", buffer))
             {
-                if (!strcmp(META_NAME[i], buffer))
-                {
-                    m_metadata[i] = value;
-                    break;
-                }
+                char trmp[5] = "qwer";
+                char *start = &trmp[0], *end = &trmp[2];
+                /* Читаем по формату " A targets 1"*/
+                /* Первый пробел игнорим, так же игнорим 9 символов " targets "*/
+                result = scanf("%*c%c%*9c%c", start, end);
+                /* Записываем в список трамплинов порядковый номер в массиве всех трамплинов */
+                int startTramp = m_tramplanes[trampolaineNum++] = *start - START_TRAMPLAINE_CHAR;
+                /* Заносим информацию о доступе этого трамплина к цели, для этого в соответствующем */
+                /* массиве в порядковом номере трамплина ставим порядковый номер цели */
+                m_tramplinesAcces[startTramp] = *end - START_TRAGET_CHAR;
             }
+            else
+            /* Иначе это другая инфа, проверим на Water, Flooding, Waterproof*/
+                for (int i = 0; i < META_SIZE; i++)
+                {
+                    if (!strcmp(META_NAME[i], buffer))
+                    {
+                        result = scanf("%d", &value);
+                        m_metadata[i] = value;
+                        break;
+                    }
+                }
         }
-
+    /* Всё это делаем, пока не достигнем конца ввода */
     } while (result > 0);
     delete [] buffer;
 }
 
+/* Важная функция - вывод на экран карты =)*/
 void MineMap::PrintMap()
 {
+    /* Выводим карту с рамкой */
     int water_start = m_height - m_Flooding;
     printf("Map %d*%d:\n", m_width, m_height);
+    printf("  +");
+    for (int i = 0; i < m_width; i++)
+        printf("-");
+    printf("+\n");
     for (int i = 0; i < m_height; i++)
     {
         printf("  ");
+        /* Если уровень затоплен, то ставим значок "~" */
         if (i >= water_start)
             printf("~");
         else
-            printf(" ");
+            printf("|");
+        /* Выводим само содержимое карты*/
         for (int j = 0; j < m_width; j++)
             printf("%c", m_Map[i][j]);
         if (i >= water_start)
             printf("~");
+        else
+            printf("|");
         printf("\n");
     }
+    /* Нижняя граница рамки*/
+    printf("  +");
+    for (int i = 0; i < m_width; i++)
+        printf("-");
+    printf("+\n");
+    /* Вывод метаданных*/
     printf("metadata:\n");
     for (int i = 0; i < META_SIZE; i++)
     {
         printf("  %s = %d\n", META_NAME[i], m_metadata[i]);
     }
+    /* Вывод информации о положении робота и лифта */
     printf("another information:\n");
     printf("  Robot at [%d, %d]\n", m_Robot.x, m_Robot.y);
-    printf("  Lift at [%d, %d]\n", m_Lift.x, m_Lift.y);
-    printf("  Lambdas at:\n");
-    if (m_Lambdas.size() == 0)
-        printf("    no lambdas.\n");
-    for (unsigned int i = 0; i < m_Lambdas.size(); i++)
-        printf("    [%d, %d]\n", m_Lambdas.at(i).x, m_Lambdas.at(i).y);
+    printf("  Lift at [%d, %d] is %s\n", m_Lift.x, m_Lift.y, (m_Map[m_Lift.y][m_Lift.x] == 'O')?"open":"close");
+
+    /* Вывод информации о расположении всех лямбд и трамплинов в два столбца */
+    int i = 0;
+    int lambdaCount = m_Lambdas.size();
+    printf("  %3d Lambdas at: |    %3d Tramplanes:\n", lambdaCount, m_tramplanesCount);
+    while (i < lambdaCount || i < m_tramplanesCount)
+    {
+        printf("    ");
+        if (i < lambdaCount)
+            printf("[%3d, %3d]    ", m_Lambdas.at(i).x, m_Lambdas.at(i).y);
+        else if (!lambdaCount && !i)
+            printf("no lambdas.   ");
+        else
+            printf("              ");
+        printf("|    ");
+        if (i < m_tramplanesCount)
+        {
+            int start = m_tramplanes[i];
+            int end = m_tramplinesAcces[m_tramplanes[i]];
+            printf("from '%c' [%3d, %3d] to '%c' [%3d, %3d]\n",
+                START_TRAMPLAINE_CHAR + start, m_startTrampolines[start]->x, m_startTrampolines[start]->y,
+                START_TRAGET_CHAR + end, m_endTrampolines[end]->x, m_endTrampolines[end]->y);
+        }
+        else if (!m_tramplanesCount && !i)
+            printf("no tramplaines.                  \n");
+        else
+            printf("                                 \n");
+        i++;
+    }
     printf("It is all\n");
 }
 
@@ -179,6 +295,20 @@ void MineMap::GetListOfPoint(list<Point>& outList, Point curPoint, TCheckFunctio
                 outList.push_back(Point(j, i));
             }
         }
+}
+
+/* Возвращает список трамплинов в виде пар Источник - Приёмник */
+list<pair<Point, Point> > MineMap::GetTramplainPairs()
+{
+    list<pair<Point, Point> > answer;
+    for (int i = 0; i < m_tramplanesCount; i++)
+    {
+        Point start = *m_startTrampolines[m_tramplanes[i]];
+        Point end = *m_endTrampolines[m_tramplinesAcces[m_tramplanes[i]]];
+        answer.push_back(pair<Point, Point>(start, end));
+
+    }
+    return answer;
 }
 
 bool MineMap::MoveRobot(Direction direction)
