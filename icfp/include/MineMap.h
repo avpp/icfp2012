@@ -3,9 +3,13 @@
 
 #include "Point.h"
 #include <vector>
+#include <list>
 
 using namespace std;
 
+typedef bool (*TCheckFunction)(char** map, Point curPoint);
+
+enum MapValue {rock = '*', lambda = '\\', wall = '#', earth = '.', robot = 'R', liftClose = 'L', liftOpen = 'O', empty = ' '};
 enum Direction {up, down, left, right};
 
 class MineMap
@@ -22,6 +26,8 @@ class MineMap
         int GetHeight() { return m_height; }
         void ReadMap();
         void PrintMap();
+
+        void GetListOfPoint(list<Point>& outList, Point curPoint, TCheckFunction func, char * mask = "\0", bool include=true);
 
         bool MoveRobot(Direction direction);
     protected:

@@ -32,6 +32,7 @@
 			<Add option="-Wall" />
 			<Add directory="include" />
 		</Compiler>
+		<Unit filename="include\Matrix.h" />
 		<Unit filename="include\MineMap.h" />
 		<Unit filename="include\Point.h" />
 		<Unit filename="src\MineMap.cpp" />
