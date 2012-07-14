@@ -1,0 +1,20 @@
+# depslib dependency file v1.0
+1342217907 source:c:\users\alexey\documents\codeblocksprojects\icfp\icfp\src\point.cpp
+	"Point.h"
+
+1342218844 c:\users\alexey\documents\codeblocksprojects\icfp\icfp\include\point.h
+
+1342224376 source:c:\users\alexey\documents\codeblocksprojects\icfp\icfp\src\start.cpp
+	"MineMap.h"
+
+1342226935 c:\users\alexey\documents\codeblocksprojects\icfp\icfp\include\minemap.h
+	"Point.h"
+	<vector>
+
+1342227132 source:c:\users\alexey\documents\codeblocksprojects\icfp\icfp\src\minemap.cpp
+	"MineMap.h"
+	<stdio.h>
+	<conio.h>
+	<string.h>
+	<queue>
+
