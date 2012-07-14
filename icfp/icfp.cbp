@@ -30,7 +30,12 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
+			<Add directory="include" />
 		</Compiler>
+		<Unit filename="include\MineMap.h" />
+		<Unit filename="include\Point.h" />
+		<Unit filename="src\MineMap.cpp" />
+		<Unit filename="src\start.cpp" />
 		<Extensions>
 			<code_completion />
 			<debugger />

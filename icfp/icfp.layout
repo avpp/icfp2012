@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_layout_file>
+	<ActiveTarget name="Debug" />
+	<File name="include\MineMap.h" open="1" top="0" tabpos="1">
+		<Cursor position="119" topLine="25" />
+	</File>
+	<File name="include\Point.h" open="1" top="0" tabpos="3">
+		<Cursor position="115" topLine="0" />
+	</File>
+	<File name="src\MineMap.cpp" open="1" top="1" tabpos="2">
+		<Cursor position="3622" topLine="128" />
+	</File>
+	<File name="src\start.cpp" open="1" top="0" tabpos="4">
+		<Cursor position="57" topLine="0" />
+	</File>
+</CodeBlocks_layout_file>
