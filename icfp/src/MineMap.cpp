@@ -10,11 +10,12 @@ int getOneChar()
     return getchar();
 }
 
-int MineMap::META_DEFAULT[MineMap::META_SIZE] = {0, 0, 10};
-const char* MineMap::META_NAME[MineMap::META_SIZE] = {"Water", "Flooding", "Waterproof"};
+int MineMap::META_DEFAULT[MineMap::META_SIZE] = {0, 0, 10, 25, 0};
+const char* MineMap::META_NAME[MineMap::META_SIZE] = {"Water", "Flooding", "Waterproof", "Growth", "Razors"};
 
 MineMap::MineMap() : m_width(m_Size.x), m_height(m_Size.y),
-m_Water(m_metadata[0]), m_Flooding(m_metadata[1]), m_Waterproof(m_metadata[2])
+m_Water(m_metadata[0]), m_Flooding(m_metadata[1]), m_Waterproof(m_metadata[2]),
+m_Growth(m_metadata[3]), m_RazorAmount(m_metadata[4])
 {
 
     //ctor
@@ -57,7 +58,7 @@ MineMap::~MineMap()
 }
 
 /*
-Заполняет информацию о трамплинах, лямбдах, лифте и роботе.
+Р—Р°РїРѕР»РЅСЏРµС‚ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ С‚СЂР°РјРїР»РёРЅР°С…, Р»СЏРјР±РґР°С…, Р»РёС„С‚Рµ Рё СЂРѕР±РѕС‚Рµ.
 */
 void MineMap::fillMapCache(char ch, int x, int y)
 {
@@ -74,17 +75,19 @@ void MineMap::fillMapCache(char ch, int x, int y)
         case 'R' : m_Robot = Point(x, y); break;
         case 'L' : m_Lift = Point(x, y); break;
         case '\\' : m_Lambdas.push_back(Point(x, y)); break;
+        case 'W' : m_Beards.push_back(Point(x, y)); break;
+        case '!' : m_Razors.push_back(Point(x, y)); break;
     }
 }
 
 /*
-Чтение карты
+Р§С‚РµРЅРёРµ РєР°СЂС‚С‹
 */
 void MineMap::ReadMap()
 {
     using namespace std;
 
-    /* Читаем первую строчку в буфер-очередь. Собственно для того, что бы узнать размер строки*/
+    /* Р§РёС‚Р°РµРј РїРµСЂРІСѓСЋ СЃС‚СЂРѕС‡РєСѓ РІ Р±СѓС„РµСЂ-РѕС‡РµСЂРµРґСЊ. РЎРѕР±СЃС‚РІРµРЅРЅРѕ РґР»СЏ С‚РѕРіРѕ, С‡С‚Рѕ Р±С‹ СѓР·РЅР°С‚СЊ СЂР°Р·РјРµСЂ СЃС‚СЂРѕРєРё*/
     queue<char> firstLine;
     char ch;
     int cnt = 0;
@@ -94,13 +97,13 @@ void MineMap::ReadMap()
         fillMapCache(ch, cnt, 0);
         cnt++;
     }
-    /* Создаём буфер-очередь карты, состоящей из строчек*/
+    /* РЎРѕР·РґР°С‘Рј Р±СѓС„РµСЂ-РѕС‡РµСЂРµРґСЊ РєР°СЂС‚С‹, СЃРѕСЃС‚РѕСЏС‰РµР№ РёР· СЃС‚СЂРѕС‡РµРє*/
     int &width = m_width;
     int &height = m_height;
     width = firstLine.size();
     height = 1;
     queue<char*> map;
-    /* Загоняем туда первую строчку*/
+    /* Р—Р°РіРѕРЅСЏРµРј С‚СѓРґР° РїРµСЂРІСѓСЋ СЃС‚СЂРѕС‡РєСѓ*/
     char *tmp = new char[width];
     for (int i = 0; i < width; i++)
     {
@@ -108,32 +111,36 @@ void MineMap::ReadMap()
         firstLine.pop();
     }
     map.push(tmp);
-    /* Читаем до конца файла или пока не встретится строчка, начинающаяся с '\n' */
+    /* Р§РёС‚Р°РµРј РґРѕ РєРѕРЅС†Р° С„Р°Р№Р»Р° РёР»Рё РїРѕРєР° РЅРµ РІСЃС‚СЂРµС‚РёС‚СЃСЏ СЃС‚СЂРѕС‡РєР°, РЅР°С‡РёРЅР°СЋС‰Р°СЏСЃСЏ СЃ '\n' */
     ch = getOneChar();
     while ((ch != EOF) && (ch != '\n'))
     {
-        /* Собираем всю строчку и записываем её в конечный буфер (для каждой строки свой массив)*/
+        /* РЎРѕР±РёСЂР°РµРј РІСЃСЋ СЃС‚СЂРѕС‡РєСѓ Рё Р·Р°РїРёСЃС‹РІР°РµРј РµС‘ РІ РєРѕРЅРµС‡РЅС‹Р№ Р±СѓС„РµСЂ (РґР»СЏ РєР°Р¶РґРѕР№ СЃС‚СЂРѕРєРё СЃРІРѕР№ РјР°СЃСЃРёРІ)*/
         tmp = new char [width];
-        for (int i = 0; i < width; i++, ch = getOneChar())
+        int i;
+        for (i = 0; i < width && ch != '\n'; i++, ch = getOneChar())
         {
             tmp[i] = ch;
             fillMapCache(ch, i, height);
         }
-        /* читаем следующий символ */
+        /* Р”РѕР±РёРІР°РµРј РґРѕ РєРѕРЅС†Р° РїСЂРѕР±РµР»Р°РјРё, РµСЃР»Рё СЃС‚СЂРѕРєР° РєРѕСЂРѕС‚РєР°СЏ */
+        while (i < width)
+            tmp[i++] = empty;
+        /* С‡РёС‚Р°РµРј СЃР»РµРґСѓСЋС‰РёР№ СЃРёРјРІРѕР» */
         ch = getOneChar();
-        /* загоняем адрес созданной строки в буфер-карту */
+        /* Р·Р°РіРѕРЅСЏРµРј Р°РґСЂРµСЃ СЃРѕР·РґР°РЅРЅРѕР№ СЃС‚СЂРѕРєРё РІ Р±СѓС„РµСЂ-РєР°СЂС‚Сѓ */
         map.push(tmp);
         height++;
     }
 
-    /* Переписываем из буфер-карты(очереди) в нормальный массив (создаём матрицу)*/
+    /* РџРµСЂРµРїРёСЃС‹РІР°РµРј РёР· Р±СѓС„РµСЂ-РєР°СЂС‚С‹(РѕС‡РµСЂРµРґРё) РІ РЅРѕСЂРјР°Р»СЊРЅС‹Р№ РјР°СЃСЃРёРІ (СЃРѕР·РґР°С‘Рј РјР°С‚СЂРёС†Сѓ)*/
     m_Map = new char* [height];
     for (int i = 0; i < height; i++)
     {
         m_Map[i] = map.front();
         map.pop();
     }
-    /* Подсчитываем, сколько было найдено трамплинов и создаём массив с найденными*/
+    /* РџРѕРґСЃС‡РёС‚С‹РІР°РµРј, СЃРєРѕР»СЊРєРѕ Р±С‹Р»Рѕ РЅР°Р№РґРµРЅРѕ С‚СЂР°РјРїР»РёРЅРѕРІ Рё СЃРѕР·РґР°С‘Рј РјР°СЃСЃРёРІ СЃ РЅР°Р№РґРµРЅРЅС‹РјРё*/
     for (int i = 0; i < TRAMPOLAINES_AMOUNT; i++)
         if (m_startTrampolines[i])
             m_tramplanesCount++;
@@ -141,33 +148,33 @@ void MineMap::ReadMap()
         m_tramplanes = new unsigned int [m_tramplanesCount];
     int trampolaineNum = 0;
 
-    /* Далее будем читать дополнительную информацию о карте*/
+    /* Р”Р°Р»РµРµ Р±СѓРґРµРј С‡РёС‚Р°С‚СЊ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅСѓСЋ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РєР°СЂС‚Рµ*/
     int result;
     char* buffer = new char[100];
     buffer[99] = 0;
     int value = 0;
     do
     {
-        /* Читаем строчку до пробела для последующей расшифровки типа информации*/
+        /* Р§РёС‚Р°РµРј СЃС‚СЂРѕС‡РєСѓ РґРѕ РїСЂРѕР±РµР»Р° РґР»СЏ РїРѕСЃР»РµРґСѓСЋС‰РµР№ СЂР°СЃС€РёС„СЂРѕРІРєРё С‚РёРїР° РёРЅС„РѕСЂРјР°С†РёРё*/
         result = scanf("%99s", buffer);
         if (result > 0)
         {
-            /* Если начинается с "Trampoline", значит это трамплин и заносим информацию для него*/
+            /* Р•СЃР»Рё РЅР°С‡РёРЅР°РµС‚СЃСЏ СЃ "Trampoline", Р·РЅР°С‡РёС‚ СЌС‚Рѕ С‚СЂР°РјРїР»РёРЅ Рё Р·Р°РЅРѕСЃРёРј РёРЅС„РѕСЂРјР°С†РёСЋ РґР»СЏ РЅРµРіРѕ*/
             if (!strcmp("Trampoline", buffer))
             {
                 char trmp[5] = "qwer";
                 char *start = &trmp[0], *end = &trmp[2];
-                /* Читаем по формату " A targets 1"*/
-                /* Первый пробел игнорим, так же игнорим 9 символов " targets "*/
+                /* Р§РёС‚Р°РµРј РїРѕ С„РѕСЂРјР°С‚Сѓ " A targets 1"*/
+                /* РџРµСЂРІС‹Р№ РїСЂРѕР±РµР» РёРіРЅРѕСЂРёРј, С‚Р°Рє Р¶Рµ РёРіРЅРѕСЂРёРј 9 СЃРёРјРІРѕР»РѕРІ " targets "*/
                 result = scanf("%*c%c%*9c%c", start, end);
-                /* Записываем в список трамплинов порядковый номер в массиве всех трамплинов */
+                /* Р—Р°РїРёСЃС‹РІР°РµРј РІ СЃРїРёСЃРѕРє С‚СЂР°РјРїР»РёРЅРѕРІ РїРѕСЂСЏРґРєРѕРІС‹Р№ РЅРѕРјРµСЂ РІ РјР°СЃСЃРёРІРµ РІСЃРµС… С‚СЂР°РјРїР»РёРЅРѕРІ */
                 int startTramp = m_tramplanes[trampolaineNum++] = *start - START_TRAMPLAINE_CHAR;
-                /* Заносим информацию о доступе этого трамплина к цели, для этого в соответствующем */
-                /* массиве в порядковом номере трамплина ставим порядковый номер цели */
+                /* Р—Р°РЅРѕСЃРёРј РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РґРѕСЃС‚СѓРїРµ СЌС‚РѕРіРѕ С‚СЂР°РјРїР»РёРЅР° Рє С†РµР»Рё, РґР»СЏ СЌС‚РѕРіРѕ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РµРј */
+                /* РјР°СЃСЃРёРІРµ РІ РїРѕСЂСЏРґРєРѕРІРѕРј РЅРѕРјРµСЂРµ С‚СЂР°РјРїР»РёРЅР° СЃС‚Р°РІРёРј РїРѕСЂСЏРґРєРѕРІС‹Р№ РЅРѕРјРµСЂ С†РµР»Рё */
                 m_tramplinesAcces[startTramp] = *end - START_TRAGET_CHAR;
             }
             else
-            /* Иначе это другая инфа, проверим на Water, Flooding, Waterproof*/
+            /* РРЅР°С‡Рµ СЌС‚Рѕ РґСЂСѓРіР°СЏ РёРЅС„Р°, РїСЂРѕРІРµСЂРёРј РЅР° Water, Flooding, Waterproof*/
                 for (int i = 0; i < META_SIZE; i++)
                 {
                     if (!strcmp(META_NAME[i], buffer))
@@ -178,21 +185,21 @@ void MineMap::ReadMap()
                     }
                 }
         }
-    /* Всё это делаем, пока не достигнем конца ввода */
+    /* Р’СЃС‘ СЌС‚Рѕ РґРµР»Р°РµРј, РїРѕРєР° РЅРµ РґРѕСЃС‚РёРіРЅРµРј РєРѕРЅС†Р° РІРІРѕРґР° */
     } while (result > 0);
     delete [] buffer;
 }
 
 /*
-Важная функция - вывод на экран карты =)
-Для изменения вывода используются флаги (enum PrintStyle)
-по умолчанию выводится всё (PSFull)
+Р’Р°Р¶РЅР°СЏ С„СѓРЅРєС†РёСЏ - РІС‹РІРѕРґ РЅР° СЌРєСЂР°РЅ РєР°СЂС‚С‹ =)
+Р”Р»СЏ РёР·РјРµРЅРµРЅРёСЏ РІС‹РІРѕРґР° РёСЃРїРѕР»СЊР·СѓСЋС‚СЃСЏ С„Р»Р°РіРё (enum PrintStyle)
+РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ РІС‹РІРѕРґРёС‚СЃСЏ РІСЃС‘ (PSFull)
 */
 void MineMap::PrintMap(int style)
 {
     if (style & PSMap)
     {
-        /* Выводим карту с рамкой */
+        /* Р’С‹РІРѕРґРёРј РєР°СЂС‚Сѓ СЃ СЂР°РјРєРѕР№ */
         int water_start = m_height - m_Flooding;
         printf("Map %d*%d:\n", m_width, m_height);
         printf("  +");
@@ -202,12 +209,12 @@ void MineMap::PrintMap(int style)
         for (int i = 0; i < m_height; i++)
         {
             printf("  ");
-            /* Если уровень затоплен, то ставим значок "~" */
+            /* Р•СЃР»Рё СѓСЂРѕРІРµРЅСЊ Р·Р°С‚РѕРїР»РµРЅ, С‚Рѕ СЃС‚Р°РІРёРј Р·РЅР°С‡РѕРє "~" */
             if (i >= water_start)
                 printf("~");
             else
                 printf("|");
-            /* Выводим само содержимое карты*/
+            /* Р’С‹РІРѕРґРёРј СЃР°РјРѕ СЃРѕРґРµСЂР¶РёРјРѕРµ РєР°СЂС‚С‹*/
             for (int j = 0; j < m_width; j++)
                 printf("%c", m_Map[i][j]);
             if (i >= water_start)
@@ -216,7 +223,7 @@ void MineMap::PrintMap(int style)
                 printf("|");
             printf("\n");
         }
-        /* Нижняя граница рамки*/
+        /* РќРёР¶РЅСЏСЏ РіСЂР°РЅРёС†Р° СЂР°РјРєРё*/
         printf("  +");
         for (int i = 0; i < m_width; i++)
             printf("-");
@@ -224,7 +231,7 @@ void MineMap::PrintMap(int style)
     }
     if (style & PSMeta)
     {
-        /* Вывод метаданных*/
+        /* Р’С‹РІРѕРґ РјРµС‚Р°РґР°РЅРЅС‹С…*/
         printf("metadata:\n");
         for (int i = 0; i < META_SIZE; i++)
         {
@@ -234,7 +241,7 @@ void MineMap::PrintMap(int style)
 
     if (style & (PSRobot | PSLift))
     {
-        /* Вывод информации о положении робота и лифта */
+        /* Р’С‹РІРѕРґ РёРЅС„РѕСЂРјР°С†РёРё Рѕ РїРѕР»РѕР¶РµРЅРёРё СЂРѕР±РѕС‚Р° Рё Р»РёС„С‚Р° */
         printf("another information:\n");
         if (style & PSRobot)
             printf("  Robot at [%d, %d]\n", m_Robot.x, m_Robot.y);
@@ -243,7 +250,7 @@ void MineMap::PrintMap(int style)
     }
     if (style & (PSLambda | PSTramplaines))
     {
-        /* Вывод информации о расположении всех лямбд и трамплинов в два столбца */
+        /* Р’С‹РІРѕРґ РёРЅС„РѕСЂРјР°С†РёРё Рѕ СЂР°СЃРїРѕР»РѕР¶РµРЅРёРё РІСЃРµС… Р»СЏРјР±Рґ Рё С‚СЂР°РјРїР»РёРЅРѕРІ РІ РґРІР° СЃС‚РѕР»Р±С†Р° */
         int i = 0;
         int lambdaCount = m_Lambdas.size();
 
@@ -312,6 +319,74 @@ void MineMap::PrintMap(int style)
         else
             printf("\n");
     }
+    if (style & (PSBeards | PSRazors))
+    {
+        printf("about growth:\n");
+        int BeardCount = m_Beards.size();
+        int RazorCount = m_Razors.size();
+        int i = 0;
+
+        if (style & PSBeards)
+            printf(" +--------------+");
+        else
+            printf("                +");
+        if (style & PSRazors)
+            printf("----------------+\n");
+        else
+            printf("\n");
+
+        if (style & PSBeards)
+            printf(" | %3d Beards:  |", BeardCount);
+        else
+            printf("                |");
+        if (style & PSRazors)
+            printf("  %3d Razors:   |\n", RazorCount);
+        else
+            printf("\n");
+
+        if (style & PSBeards)
+            printf(" +--------------+");
+        else
+            printf("                +");
+        if (style & PSRazors)
+            printf("----------------+\n");
+        else
+            printf("\n");
+
+        while (((style & PSBeards) && i < BeardCount) || ((style & PSRazors) && i < RazorCount))
+        {
+            if (style & PSBeards)
+                printf(" |  ");
+            else
+                printf("    ");
+
+            if (i < BeardCount && (style & PSBeards))
+                printf("[%3d, %3d]  ", m_Beards.at(i).x, m_Beards.at(i).y);
+            else if (!BeardCount && !i && PSBeards)
+                printf("no beards.  ");
+            else
+                printf("            ");
+
+            printf("|    ");
+
+            if (i < RazorCount && (style & PSRazors))
+                printf("[%3d, %3d]  |\n", m_Razors.at(i).x, m_Razors.at(i).y);
+            else if (!RazorCount && !i && (style & PSRazors))
+                printf("no razors   |\n");
+            else
+                printf("            %c\n", (style & PSRazors)?'|':' ');
+            i++;
+        }
+
+        if (style & PSBeards)
+            printf(" +--------------+");
+        else
+            printf("                +");
+        if (style & PSRazors)
+            printf("----------------+\n");
+        else
+            printf("\n");
+    }
     if (style)
         printf("It is all\n");
 }
@@ -328,15 +403,15 @@ bool charInString(char c, char* str)
 }
 
 /*
-Получение списка точек около curPoint
-добавляются только те, которые удовлетворяют функции func, если она не NULL
-и те, которые входят в строчку mask, если include = true или не входят иначе
-например
+РџРѕР»СѓС‡РµРЅРёРµ СЃРїРёСЃРєР° С‚РѕС‡РµРє РѕРєРѕР»Рѕ curPoint
+РґРѕР±Р°РІР»СЏСЋС‚СЃСЏ С‚РѕР»СЊРєРѕ С‚Рµ, РєРѕС‚РѕСЂС‹Рµ СѓРґРѕРІР»РµС‚РІРѕСЂСЏСЋС‚ С„СѓРЅРєС†РёРё func, РµСЃР»Рё РѕРЅР° РЅРµ NULL
+Рё С‚Рµ, РєРѕС‚РѕСЂС‹Рµ РІС…РѕРґСЏС‚ РІ СЃС‚СЂРѕС‡РєСѓ mask, РµСЃР»Рё include = true РёР»Рё РЅРµ РІС…РѕРґСЏС‚ РёРЅР°С‡Рµ
+РЅР°РїСЂРёРјРµСЂ
 GetListOfPoint(list, Point(2,2), NULL, "*#", true);
-вернёт все камни и стены около 2,2
+РІРµСЂРЅС‘С‚ РІСЃРµ РєР°РјРЅРё Рё СЃС‚РµРЅС‹ РѕРєРѕР»Рѕ 2,2
 GetListOfPoint(list, Point(2,2), NULL, "*#", false);
-вернёт все не камни и не стены
-по идеи можно и так:
+РІРµСЂРЅС‘С‚ РІСЃРµ РЅРµ РєР°РјРЅРё Рё РЅРµ СЃС‚РµРЅС‹
+РїРѕ РёРґРµРё РјРѕР¶РЅРѕ Рё С‚Р°Рє:
 GetListOfPoint(list, Point(2,2), NULL, (char*)(MapValue[]){rock, wall}, true);
 */
 void MineMap::GetListOfPoint(list<Point>& outList, Point curPoint, TCheckFunction func, char * mask, bool include)
@@ -356,7 +431,7 @@ void MineMap::GetListOfPoint(list<Point>& outList, Point curPoint, TCheckFunctio
         }
 }
 
-/* Возвращает список трамплинов в виде пар Источник - Приёмник */
+/* Р’РѕР·РІСЂР°С‰Р°РµС‚ СЃРїРёСЃРѕРє С‚СЂР°РјРїР»РёРЅРѕРІ РІ РІРёРґРµ РїР°СЂ РСЃС‚РѕС‡РЅРёРє - РџСЂРёС‘РјРЅРёРє */
 list<pair<Point, Point> > MineMap::GetTramplainPairs()
 {
     list<pair<Point, Point> > answer;
