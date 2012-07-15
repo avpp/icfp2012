@@ -5,8 +5,10 @@
 #include <vector>
 #include <list>
 #include <map>
+#include <stdio.h>
 
 using namespace std;
+
 
 typedef bool (*TCheckFunction)(char** map, Point curPoint);
 
@@ -37,6 +39,8 @@ class MineMap
 
         list<pair<Point, Point> > GetTramplainPairs();
         bool MoveRobot(Direction direction);
+
+        void openFileForMap(char *fileName);
     protected:
     private:
 
@@ -70,6 +74,9 @@ class MineMap
         static const char* META_NAME[META_SIZE];
         static int META_DEFAULT[META_SIZE];
         int m_metadata[META_SIZE];
+
+        FILE *m_inputFile;
+        int getOneChar();
 
 };
 

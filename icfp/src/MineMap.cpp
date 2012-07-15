@@ -1,13 +1,40 @@
 #include "MineMap.h"
 
-#include <stdio.h>
-#include <conio.h>
+
 #include <string.h>
 #include <queue>
 
-int getOneChar()
+#include <stdio.h>
+
+using namespace std;
+
+
+
+void MineMap::openFileForMap(char *fileName)
 {
-    return getchar();
+    if (m_inputFile == stdin || m_inputFile == NULL )
+    {
+        m_inputFile = fopen(fileName, "r");
+        if (m_inputFile == NULL)
+        {
+            printf("error with open file %s\n", fileName);
+            m_inputFile = stdin;
+        }
+    }
+}
+
+int MineMap::getOneChar()
+{
+    if (m_inputFile != NULL)
+    {
+        int ans = getc( m_inputFile );
+        if (ans == EOF)
+        {
+            fclose( m_inputFile );
+        }
+        return ans;
+    }
+    return 0;
 }
 
 int MineMap::META_DEFAULT[MineMap::META_SIZE] = {0, 0, 10, 25, 0};
@@ -33,6 +60,7 @@ m_Growth(m_metadata[3]), m_RazorAmount(m_metadata[4])
     m_tramplanesCount = 0;
     for (int i = 0; i < META_SIZE; i++)
         m_metadata[i] = META_DEFAULT[i];
+    m_inputFile = stdin;
 }
 
 MineMap::~MineMap()
@@ -156,7 +184,7 @@ void MineMap::ReadMap()
     do
     {
         /* Читаем строчку до пробела для последующей расшифровки типа информации*/
-        result = scanf("%99s", buffer);
+        result = fscanf(m_inputFile, "%99s", buffer);
         if (result > 0)
         {
             /* Если начинается с "Trampoline", значит это трамплин и заносим информацию для него*/
@@ -166,7 +194,7 @@ void MineMap::ReadMap()
                 char *start = &trmp[0], *end = &trmp[2];
                 /* Читаем по формату " A targets 1"*/
                 /* Первый пробел игнорим, так же игнорим 9 символов " targets "*/
-                result = scanf("%*c%c%*9c%c", start, end);
+                result = fscanf(m_inputFile, "%*c%c%*9c%c", start, end);
                 /* Записываем в список трамплинов порядковый номер в массиве всех трамплинов */
                 int startTramp = m_tramplanes[trampolaineNum++] = *start - START_TRAMPLAINE_CHAR;
                 /* Заносим информацию о доступе этого трамплина к цели, для этого в соответствующем */
@@ -179,7 +207,7 @@ void MineMap::ReadMap()
                 {
                     if (!strcmp(META_NAME[i], buffer))
                     {
-                        result = scanf("%d", &value);
+                        result = fscanf(m_inputFile, "%d", &value);
                         m_metadata[i] = value;
                         break;
                     }
