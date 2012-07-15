@@ -34,8 +34,9 @@ class MineMap
         int GetHeight() { return m_height; }
         void ReadMap();
         void PrintMap(int style = PSFull);
-
+        void UpdateMineMap();
         void GetListOfPoint(list<Point>& outList, Point curPoint, TCheckFunction func, char * mask = "\0", bool include=true);
+        void GetListOrthogonalPoints(list<Point>& outList, Point curPoint, TCheckFunction func, char * mask, bool include);
 
         list<pair<Point, Point> > GetTramplainPairs();
         bool MoveRobot(Direction direction);

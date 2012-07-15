@@ -483,3 +483,112 @@ bool MineMap::MoveRobot(Direction direction)
 
     return result;
 }
+
+void MineMap::GetListOrthogonalPoints(list<Point>& outList, Point curPoint, TCheckFunction func, char * mask, bool include)
+{
+    Point top = Point(curPoint.x, (curPoint.y == 0) ? curPoint.y : curPoint.y - 1);
+    Point bottom = Point(curPoint.x, (curPoint.y == m_height - 1) ? curPoint.y : curPoint.y + 1);
+    Point left = Point((curPoint.x == 0) ? curPoint.x : curPoint.x - 1, curPoint.y);
+    Point right = Point((curPoint.x == m_width - 1)?curPoint.x:curPoint.x + 1, curPoint.y);
+
+    Point cells[] = {top, bottom, left, right};
+    for (int i = 0; i < 4; i++)
+    {
+        char ch = m_Map[cells[i].y][cells[i].x];
+        bool inMask = charInString(ch, mask);
+        bool MaskCheck = (include)?inMask:!inMask;
+        if (MaskCheck && (func == NULL || func(m_Map, Point(cells[i].x, cells[i].y))))
+            outList.push_back(Point(cells[i].x, cells[i].y));
+    }
+}
+
+
+void MineMap::UpdateMineMap()
+{
+    char** newMap = new char*[m_height];
+    for (int i = 0; i < m_height; i++)
+    {
+        newMap[i] = new char[m_width];
+        for (int j = 0; j < m_width; j++)
+        {
+            newMap[i][j] = ' ';
+        }
+    }
+
+
+    bool openLift = true;
+    for (int i = 0; i < m_height; i++)
+    {
+        for (int j = 0; j < m_width; j++)
+        {
+            switch(m_Map[i][j])
+            {
+            case '*':
+                {
+                    openLift = false;
+
+                    if (i < (m_height - 1))
+                    {
+                        //1 условие
+                        if (m_Map[i + 1][j] == ' ')
+                        {
+                            newMap[i][j] = ' ';
+                            newMap[i + 1][j] = '*';
+                            continue;
+                        }
+
+
+                        //2..4 условия
+                        if ((j < (m_width - 1)))
+                        {
+                            if ((m_Map[i][j + 1] == ' ') && (m_Map[i + 1][j + 1] == ' '))
+                            {
+                                //2 и 4 условия
+                                if ((m_Map[i + 1][j] == '*') || (m_Map[i + 1][j] == '\\'))
+                                {
+                                    newMap[i][j] = ' ';
+                                    newMap[i + 1][j + 1] = '*';
+                                    continue;
+                                }
+                            }
+                            else
+                            {
+                                //3 условие
+                                if ((j > 0) && (m_Map[i + 1][j] == '*')
+                                    && (m_Map[i][j - 1] == ' ') && (m_Map[i + 1][j - 1] == ' '))
+                                {
+                                    newMap[i][j] = ' ';
+                                    newMap[i + 1][j - 1] = '*';
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                    //каемнь остается на месте
+                    newMap[i][j] = '*';
+
+                }
+            default:
+                {
+                    if (newMap[i][j] == ' ')
+                    {
+                        newMap[i][j] = m_Map[i][j];
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    if (openLift)
+    {
+        newMap[m_Lift.y][m_Lift.x] = 'O'; // ...[y, x] - Oo
+    }
+
+    for (int i = 0; i < m_height; i++)
+    {
+        delete[] m_Map[i];
+    }
+    delete[] m_Map;
+
+    m_Map = newMap;
+}
