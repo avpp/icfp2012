@@ -12,6 +12,8 @@ typedef bool (*TCheckFunction)(char** map, Point curPoint);
 
 enum MapValue {rock = '*', lambda = '\\', wall = '#', earth = '.', robot = 'R', liftClose = 'L', liftOpen = 'O', empty = ' '};
 enum Direction {up, down, left, right};
+enum PrintStyle {PSMap = 1<<0, PSMeta = 1<<1, PSRobot = 1<<2, PSLift = 1<<3,
+                 PSLambda = 1<<4, PSTramplaines = 1<<5, PSFull = ((1<<6) - 1), PSShort = ((1<<4) - 1)};
 
 class MineMap
 {
@@ -26,7 +28,7 @@ class MineMap
         int GetWidth() { return m_width; }
         int GetHeight() { return m_height; }
         void ReadMap();
-        void PrintMap();
+        void PrintMap(int style = PSFull);
 
         void GetListOfPoint(list<Point>& outList, Point curPoint, TCheckFunction func, char * mask = "\0", bool include=true);
 

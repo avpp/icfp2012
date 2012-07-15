@@ -5,15 +5,15 @@
 		<Cursor position="1752" topLine="0" />
 	</File>
 	<File name="include\MineMap.h" open="1" top="0" tabpos="1">
-		<Cursor position="387" topLine="8" />
+		<Cursor position="1947" topLine="48" />
 	</File>
 	<File name="include\Point.h" open="1" top="0" tabpos="3">
 		<Cursor position="130" topLine="1" />
 	</File>
 	<File name="src\MineMap.cpp" open="1" top="1" tabpos="2">
-		<Cursor position="2471" topLine="88" />
+		<Cursor position="9162" topLine="234" />
 	</File>
 	<File name="src\start.cpp" open="1" top="0" tabpos="4">
-		<Cursor position="113" topLine="0" />
+		<Cursor position="394" topLine="2" />
 	</File>
 </CodeBlocks_layout_file>

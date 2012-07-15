@@ -4,17 +4,17 @@
 
 1342218844 c:\users\alexey\documents\codeblocksprojects\icfp\icfp\include\point.h
 
-1342306968 source:c:\users\alexey\documents\codeblocksprojects\icfp\icfp\src\start.cpp
+1342311208 source:c:\users\alexey\documents\codeblocksprojects\icfp\icfp\src\start.cpp
 	"MineMap.h"
 	<stdio.h>
 
-1342308511 c:\users\alexey\documents\codeblocksprojects\icfp\icfp\include\minemap.h
+1342311246 c:\users\alexey\documents\codeblocksprojects\icfp\icfp\include\minemap.h
 	"Point.h"
 	<vector>
 	<list>
 	<map>
 
-1342306675 source:c:\users\alexey\documents\codeblocksprojects\icfp\icfp\src\minemap.cpp
+1342311346 source:c:\users\alexey\documents\codeblocksprojects\icfp\icfp\src\minemap.cpp
 	"MineMap.h"
 	<stdio.h>
 	<conio.h>

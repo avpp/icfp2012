@@ -183,78 +183,137 @@ void MineMap::ReadMap()
     delete [] buffer;
 }
 
-/* Важная функция - вывод на экран карты =)*/
-void MineMap::PrintMap()
+/*
+Важная функция - вывод на экран карты =)
+Для изменения вывода используются флаги (enum PrintStyle)
+по умолчанию выводится всё (PSFull)
+*/
+void MineMap::PrintMap(int style)
 {
-    /* Выводим карту с рамкой */
-    int water_start = m_height - m_Flooding;
-    printf("Map %d*%d:\n", m_width, m_height);
-    printf("  +");
-    for (int i = 0; i < m_width; i++)
-        printf("-");
-    printf("+\n");
-    for (int i = 0; i < m_height; i++)
+    if (style & PSMap)
     {
-        printf("  ");
-        /* Если уровень затоплен, то ставим значок "~" */
-        if (i >= water_start)
-            printf("~");
-        else
-            printf("|");
-        /* Выводим само содержимое карты*/
-        for (int j = 0; j < m_width; j++)
-            printf("%c", m_Map[i][j]);
-        if (i >= water_start)
-            printf("~");
-        else
-            printf("|");
-        printf("\n");
-    }
-    /* Нижняя граница рамки*/
-    printf("  +");
-    for (int i = 0; i < m_width; i++)
-        printf("-");
-    printf("+\n");
-    /* Вывод метаданных*/
-    printf("metadata:\n");
-    for (int i = 0; i < META_SIZE; i++)
-    {
-        printf("  %s = %d\n", META_NAME[i], m_metadata[i]);
-    }
-    /* Вывод информации о положении робота и лифта */
-    printf("another information:\n");
-    printf("  Robot at [%d, %d]\n", m_Robot.x, m_Robot.y);
-    printf("  Lift at [%d, %d] is %s\n", m_Lift.x, m_Lift.y, (m_Map[m_Lift.y][m_Lift.x] == 'O')?"open":"close");
-
-    /* Вывод информации о расположении всех лямбд и трамплинов в два столбца */
-    int i = 0;
-    int lambdaCount = m_Lambdas.size();
-    printf("  %3d Lambdas at: |    %3d Tramplanes:\n", lambdaCount, m_tramplanesCount);
-    while (i < lambdaCount || i < m_tramplanesCount)
-    {
-        printf("    ");
-        if (i < lambdaCount)
-            printf("[%3d, %3d]    ", m_Lambdas.at(i).x, m_Lambdas.at(i).y);
-        else if (!lambdaCount && !i)
-            printf("no lambdas.   ");
-        else
-            printf("              ");
-        printf("|    ");
-        if (i < m_tramplanesCount)
+        /* Выводим карту с рамкой */
+        int water_start = m_height - m_Flooding;
+        printf("Map %d*%d:\n", m_width, m_height);
+        printf("  +");
+        for (int i = 0; i < m_width; i++)
+            printf("-");
+        printf("+\n");
+        for (int i = 0; i < m_height; i++)
         {
-            int start = m_tramplanes[i];
-            int end = m_tramplinesAcces[m_tramplanes[i]];
-            printf("from '%c' [%3d, %3d] to '%c' [%3d, %3d]\n",
-                START_TRAMPLAINE_CHAR + start, m_startTrampolines[start]->x, m_startTrampolines[start]->y,
-                START_TRAGET_CHAR + end, m_endTrampolines[end]->x, m_endTrampolines[end]->y);
+            printf("  ");
+            /* Если уровень затоплен, то ставим значок "~" */
+            if (i >= water_start)
+                printf("~");
+            else
+                printf("|");
+            /* Выводим само содержимое карты*/
+            for (int j = 0; j < m_width; j++)
+                printf("%c", m_Map[i][j]);
+            if (i >= water_start)
+                printf("~");
+            else
+                printf("|");
+            printf("\n");
         }
-        else if (!m_tramplanesCount && !i)
-            printf("no tramplaines.                  \n");
-        else
-            printf("                                 \n");
-        i++;
+        /* Нижняя граница рамки*/
+        printf("  +");
+        for (int i = 0; i < m_width; i++)
+            printf("-");
+        printf("+\n");
     }
-    printf("It is all\n");
+    if (style & PSMeta)
+    {
+        /* Вывод метаданных*/
+        printf("metadata:\n");
+        for (int i = 0; i < META_SIZE; i++)
+        {
+            printf("  %s = %d\n", META_NAME[i], m_metadata[i]);
+        }
+    }
+
+    if (style & (PSRobot | PSLift))
+    {
+        /* Вывод информации о положении робота и лифта */
+        printf("another information:\n");
+        if (style & PSRobot)
+            printf("  Robot at [%d, %d]\n", m_Robot.x, m_Robot.y);
+        if (style & PSLift)
+            printf("  Lift at [%d, %d] is %s\n", m_Lift.x, m_Lift.y, (m_Map[m_Lift.y][m_Lift.x] == 'O')?"open":"close");
+    }
+    if (style & (PSLambda | PSTramplaines))
+    {
+        /* Вывод информации о расположении всех лямбд и трамплинов в два столбца */
+        int i = 0;
+        int lambdaCount = m_Lambdas.size();
+
+        if (style & PSLambda)
+            printf(" +----------------+");
+        else
+            printf("                  +");
+        if (style & PSTramplaines)
+            printf("-------------------------------------------+\n");
+        else
+            printf("\n");
+
+        if (style & PSLambda)
+            printf(" |%3d Lambdas at: |", lambdaCount);
+        else
+            printf("                  |");
+        if (style & PSTramplaines)
+            printf("    %3d Tramplanes:                        |\n", m_tramplanesCount);
+        else
+            printf("\n");
+
+        if (style & PSLambda)
+            printf(" +----------------+");
+        else
+            printf("                  +");
+        if (style & PSTramplaines)
+            printf("-------------------------------------------+\n");
+        else
+            printf("\n");
+
+        while (((style & PSLambda) && i < lambdaCount) || ((style & PSTramplaines) && i < m_tramplanesCount))
+        {
+            if (style & PSLambda)
+                printf(" |  ");
+            else
+                printf("    ");
+            if (i < lambdaCount && (style & PSLambda))
+                printf("[%3d, %3d]    ", m_Lambdas.at(i).x, m_Lambdas.at(i).y);
+            else if (!lambdaCount && !i && (style & PSLambda))
+                printf("no lambdas.   ");
+            else
+                printf("              ");
+            printf("|    ");
+
+            if (i < m_tramplanesCount && (style & PSTramplaines))
+            {
+                int start = m_tramplanes[i];
+                int end = m_tramplinesAcces[m_tramplanes[i]];
+                printf("from '%c' [%3d, %3d] to '%c' [%3d, %3d]  |\n",
+                    START_TRAMPLAINE_CHAR + start, m_startTrampolines[start]->x, m_startTrampolines[start]->y,
+                    START_TRAGET_CHAR + end, m_endTrampolines[end]->x, m_endTrampolines[end]->y);
+            }
+            else if (!m_tramplanesCount && !i && (style & PSTramplaines))
+                printf("no tramplaines.                        |\n");
+            else
+                printf("                                       %c\n", (style & PSTramplaines)?'|':' ');
+            i++;
+        }
+
+        if (style & PSLambda)
+            printf(" +----------------+");
+        else
+            printf("                  +");
+        if (style & PSTramplaines)
+            printf("-------------------------------------------+\n");
+        else
+            printf("\n");
+    }
+    if (style)
+        printf("It is all\n");
 }
 
 bool charInString(char c, char* str)
