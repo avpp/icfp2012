@@ -4,11 +4,11 @@
 
 1342315678 c:\users\alexey\documents\codeblocksprojects\icfp\icfp\include\point.h
 
-1342357442 source:c:\users\alexey\documents\codeblocksprojects\icfp\icfp\src\start.cpp
+1342357908 source:c:\users\alexey\documents\codeblocksprojects\icfp\icfp\src\start.cpp
 	"MineMap.h"
 	<stdio.h>
 
-1342356975 c:\users\alexey\documents\codeblocksprojects\icfp\icfp\include\minemap.h
+1342358144 c:\users\alexey\documents\codeblocksprojects\icfp\icfp\include\minemap.h
 	"Point.h"
 	<vector>
 	<list>

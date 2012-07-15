@@ -14,7 +14,7 @@ typedef bool (*TCheckFunction)(char** map, Point curPoint);
 
 enum MapValue {rock = '*', lambda = '\\', wall = '#', earth = '.',
                robot = 'R', liftClose = 'L', liftOpen = 'O', empty = ' ',
-               beard = 'W', razor = '!'};
+               beard = 'W', razor = '!', horock = '@'};
 enum Direction {up, down, left, right};
 enum PrintStyle {PSMap = 1<<0, PSMeta = 1<<1, PSRobot = 1<<2, PSLift = 1<<3, PSShort = ((1<<4) - 1),
                  PSLambda = 1<<4, PSTramplaines = 1<<5, PSBeards = 1<<6, PSRazors = 1<<7,
@@ -51,6 +51,7 @@ class MineMap
         vector<Point> m_Lambdas;
         vector<Point> m_Beards;
         vector<Point> m_Razors;
+        vector<Point> m_HORock;
         Point m_Lift;
         Point m_Robot;
         int& m_width;

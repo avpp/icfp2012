@@ -105,6 +105,7 @@ void MineMap::fillMapCache(char ch, int x, int y)
         case '\\' : m_Lambdas.push_back(Point(x, y)); break;
         case 'W' : m_Beards.push_back(Point(x, y)); break;
         case '!' : m_Razors.push_back(Point(x, y)); break;
+        case '@' : m_HORock.push_back(Point(x, y)); break;
     }
 }
 
@@ -280,7 +281,7 @@ void MineMap::PrintMap(int style)
     {
         /* Вывод информации о расположении всех лямбд и трамплинов в два столбца */
         int i = 0;
-        int lambdaCount = m_Lambdas.size();
+        int lambdaCount = m_Lambdas.size() + m_HORock.size();
 
         if (style & PSLambda)
             printf(" +----------------+");
@@ -316,7 +317,10 @@ void MineMap::PrintMap(int style)
             else
                 printf("    ");
             if (i < lambdaCount && (style & PSLambda))
-                printf("[%3d, %3d]    ", m_Lambdas.at(i).x, m_Lambdas.at(i).y);
+                if (i < m_Lambdas.size())
+                    printf("  [%3d, %3d]  ", m_Lambdas.at(i).x, m_Lambdas.at(i).y);
+                else
+                    printf("* [%3d, %3d]  ", m_HORock.at(i - m_Lambdas.size()).x, m_HORock.at(i - m_Lambdas.size()).y);
             else if (!lambdaCount && !i && (style & PSLambda))
                 printf("no lambdas.   ");
             else
